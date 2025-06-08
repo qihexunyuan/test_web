@@ -79,6 +79,32 @@
         </span>
       </template>
     </el-dialog>
+    <!-- 更新教师表单，默认隐藏 -->
+    <el-dialog v-model="updateTeacherDialogVisible" title="更新教师信息">
+      <el-form :model="updateTeacherForm" label-width="120px">
+        <el-form-item label="教师姓名">
+          <el-input v-model="updateTeacherForm.name"></el-input>
+        </el-form-item>
+        <el-form-item label="教授科目">
+          <el-input v-model="updateTeacherForm.subject"></el-input>
+        </el-form-item>
+        <el-form-item label="教授班级">
+          <el-input v-model="updateTeacherForm.class"></el-input>
+        </el-form-item>
+        <el-form-item label="科目总学时">
+          <el-input v-model.number="updateTeacherForm.totalHours"></el-input>
+        </el-form-item>
+        <el-form-item label="班级人数">
+          <el-input v-model.number="updateTeacherForm.classSize"></el-input>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="updateTeacherDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitUpdateTeacher()">确定</el-button>
+        </span>
+      </template>
+    </el-dialog>
     <!-- 教师列表表格 -->
     <div v-if="showTeacherManagement">
       <div id="app">
@@ -283,8 +309,8 @@ const teacherForm = ref({
   name: '',
   subject: '',
   class: '',
-  totalHours: '',
-  classSize: ''
+  totalHours: 0,
+  classSize: 0
 });
 // 更新教师表单数据
 const updateTeacherForm = ref({
@@ -292,8 +318,8 @@ const updateTeacherForm = ref({
   name: '',
   subject: '',
   class: '',
-  totalHours: '',
-  classSize: ''
+  totalHours: 0,
+  classSize: 0
 });
 
 const teachers = ref([]); // 教师数据
@@ -331,6 +357,15 @@ const handleTeacherManagement = async () => {
  * 点击新增教师按钮触发，显示对话框
  */
 const handleAddTeacher = () => {
+  // 打开对话框前清空表单
+  teacherForm.value = {
+    id: '',
+    name: '',
+    subject: '',
+    class: '',
+    totalHours: 0,
+    classSize: 0
+  };
   teacherDialogVisible.value = true;
 };
 
@@ -340,18 +375,9 @@ const handleAddTeacher = () => {
 const submitAddTeacher = async () => {
   try {
     // 调用 api.addTeacher 方法提交数据
-    const res = await api.addTeacher(teacherForm.value);
+    await api.addTeacher(teacherForm.value);
     ElMessage.success('教师添加成功');
     teacherDialogVisible.value = false;
-    // 清空表单数据
-    teacherForm.value = {
-      id: '',
-      name: '',
-      subject: '',
-      class: '',
-      totalHours: '',
-      classSize: ''
-    };
     // 重新获取教师列表
     await fetchTeacherList();
   } catch (error) {
@@ -364,14 +390,7 @@ const submitAddTeacher = async () => {
  * @param {Object} teacher 教师数据
  */
 const handleUpdateTeacher = (teacher) => {
-  updateTeacherForm.value = {
-    id: teacher.id,
-    name: teacher.name,
-    subject: teacher.subject,
-    class: teacher.class,
-    totalHours: teacher.totalHours,
-    classSize: teacher.classSize
-  };
+  updateTeacherForm.value = { ...teacher };
   updateTeacherDialogVisible.value = true;
 };
 
@@ -383,6 +402,7 @@ const submitUpdateTeacher = async () => {
     await api.updateTeacher(updateTeacherForm.value);
     ElMessage.success('教师信息更新成功');
     updateTeacherDialogVisible.value = false;
+    // 重新获取教师列表
     await fetchTeacherList();
   } catch (error) {
     ElMessage.error('教师信息更新失败，请重试');
