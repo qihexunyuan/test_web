@@ -11,7 +11,7 @@ app.use(cors()) // 配置跨域
 app.use(router) // 配置路由
 
 app.get('/', (req, res) => {
-  res.send('API服务已启动------修改');
+  res.send('API服务已启动------修改------');
 });
 
 // 监听
