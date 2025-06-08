@@ -1,7 +1,9 @@
 <template>
   <div>
-    <!-- 新增用户按钮 -->
+    <!-- 新增学生按钮 -->
     <el-button type="primary" @click="handleAddUser">新增学生</el-button>
+    <!-- 教师管理按钮 -->
+    <el-button type="primary" @click="handleTeacherManagement">教师管理</el-button>
     <!-- 新增学生表单，默认隐藏 -->
     <el-dialog v-model="dialogVisible" title="新增学生">
       <el-form :model="userForm" label-width="120px">
@@ -51,16 +53,61 @@
         </span>
       </template>
     </el-dialog>
-  </div>
-  <div id="app">
-    <!-- 标题 -->
-    <h1>学生成绩管理系统</h1>
-    <!-- 搜索框 -->
-    <el-input
-      v-model="searchKeyword"
-      placeholder="请输入姓名关键字搜索"
-      @input="handleSearch"
-    ></el-input>
+    <!-- 新增教师表单，默认隐藏 -->
+    <el-dialog v-model="teacherDialogVisible" title="新增教师">
+      <el-form :model="teacherForm" label-width="120px">
+        <el-form-item label="教师姓名">
+          <el-input v-model="teacherForm.name"></el-input>
+        </el-form-item>
+        <el-form-item label="教授科目">
+          <el-input v-model="teacherForm.subject"></el-input>
+        </el-form-item>
+        <el-form-item label="教授班级">
+          <el-input v-model="teacherForm.class"></el-input>
+        </el-form-item>
+        <el-form-item label="科目总学时">
+          <el-input v-model.number="teacherForm.totalHours"></el-input>
+        </el-form-item>
+        <el-form-item label="班级人数">
+          <el-input v-model.number="teacherForm.classSize"></el-input>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="teacherDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitAddTeacher()">确定</el-button>
+        </span>
+      </template>
+    </el-dialog>
+    <!-- 教师列表表格 -->
+    <div v-if="showTeacherManagement">
+      <div id="app">
+        <h1>教师管理系统</h1>
+        <!-- 搜索框 -->
+        <el-input
+          v-model="teacherSearchKeyword"
+          placeholder="请输入教师姓名关键字搜索"
+          @input="handleTeacherSearch"
+        ></el-input>
+        <!-- 表格 -->
+        <el-table :data="filteredTeachers" style="width: 100%">
+          <el-table-column prop="id" label="ID"></el-table-column>
+          <el-table-column prop="name" label="教师姓名"></el-table-column>
+          <el-table-column prop="subject" label="教授科目"></el-table-column>
+          <el-table-column prop="class" label="教授班级"></el-table-column>
+          <el-table-column prop="totalHours" label="科目总学时"></el-table-column>
+          <el-table-column prop="classSize" label="班级人数"></el-table-column>
+          <el-table-column label="操作">
+            <template #default="scope">
+              <el-button type="danger" @click="deleteTeacher(scope.row.id)">删除</el-button>
+              <el-button type="warning" @click="handleUpdateTeacher(scope.row)">更新</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <!-- 新增教师按钮 -->
+        <el-button type="primary" @click="handleAddTeacher">新增教师</el-button>
+      </div>
+    </div>
     <!-- 表格 -->
     <el-table :data="filteredStudents" style="width: 100%">
       <el-table-column prop="id" label="ID"></el-table-column>
@@ -223,6 +270,156 @@ const fetchStudentList = async () => {
 onMounted(async () => {
   await fetchStudentList();
 });
+
+// 控制教师管理界面显示隐藏
+const showTeacherManagement = ref(false);
+// 控制新增教师对话框显示隐藏
+const teacherDialogVisible = ref(false);
+// 控制更新教师对话框显示隐藏
+const updateTeacherDialogVisible = ref(false);
+// 新增教师表单数据
+const teacherForm = ref({
+  id: '',
+  name: '',
+  subject: '',
+  class: '',
+  totalHours: '',
+  classSize: ''
+});
+// 更新教师表单数据
+const updateTeacherForm = ref({
+  id: '',
+  name: '',
+  subject: '',
+  class: '',
+  totalHours: '',
+  classSize: ''
+});
+
+const teachers = ref([]); // 教师数据
+// 教师搜索关键字
+const teacherSearchKeyword = ref('');
+
+// 分页相关参数
+const teacherPageIndex = ref(1);
+const teacherPageSize = ref(10);
+
+// 过滤后的教师数据
+const filteredTeachers = computed(() => {
+  if (!teacherSearchKeyword.value) {
+    return teachers.value;
+  }
+  return teachers.value.filter(teacher =>
+    teacher.name.includes(teacherSearchKeyword.value)
+  );
+});
+
+// 教师搜索处理函数
+const handleTeacherSearch = () => {
+  // 搜索逻辑已在 computed 中实现，此处可留空
+};
+
+/**
+ * 点击教师管理按钮触发，显示教师管理界面
+ */
+const handleTeacherManagement = async () => {
+  showTeacherManagement.value = true;
+  await fetchTeacherList();
+};
+
+/**
+ * 点击新增教师按钮触发，显示对话框
+ */
+const handleAddTeacher = () => {
+  teacherDialogVisible.value = true;
+};
+
+/**
+ * 提交新增教师表单数据
+ */
+const submitAddTeacher = async () => {
+  try {
+    // 调用 api.addTeacher 方法提交数据
+    const res = await api.addTeacher(teacherForm.value);
+    ElMessage.success('教师添加成功');
+    teacherDialogVisible.value = false;
+    // 清空表单数据
+    teacherForm.value = {
+      id: '',
+      name: '',
+      subject: '',
+      class: '',
+      totalHours: '',
+      classSize: ''
+    };
+    // 重新获取教师列表
+    await fetchTeacherList();
+  } catch (error) {
+    ElMessage.error('教师添加失败，请重试');
+  }
+};
+
+/**
+ * 点击更新教师按钮触发，显示对话框
+ * @param {Object} teacher 教师数据
+ */
+const handleUpdateTeacher = (teacher) => {
+  updateTeacherForm.value = {
+    id: teacher.id,
+    name: teacher.name,
+    subject: teacher.subject,
+    class: teacher.class,
+    totalHours: teacher.totalHours,
+    classSize: teacher.classSize
+  };
+  updateTeacherDialogVisible.value = true;
+};
+
+/**
+ * 提交更新教师信息表单数据
+ */
+const submitUpdateTeacher = async () => {
+  try {
+    await api.updateTeacher(updateTeacherForm.value);
+    ElMessage.success('教师信息更新成功');
+    updateTeacherDialogVisible.value = false;
+    await fetchTeacherList();
+  } catch (error) {
+    ElMessage.error('教师信息更新失败，请重试');
+  }
+};
+
+/**
+ * 删除教师数据
+ * @param {number} id 教师 ID
+ */
+const deleteTeacher = async (id) => {
+  try {
+    // 调用 api.deleteTeacher 方法删除数据
+    await api.deleteTeacher({ id });
+    ElMessage.success('教师删除成功');
+    // 重新获取教师列表
+    await fetchTeacherList();
+  } catch (error) {
+    ElMessage.error('教师删除失败，请重试');
+  }
+};
+
+/**
+ * 获取教师列表
+ */
+const fetchTeacherList = async () => {
+  try {
+    const res = await api.getTeacherList({ 
+      pageIndex: teacherPageIndex.value, 
+      pageSize: teacherPageSize.value, 
+      searchKey: teacherSearchKeyword.value 
+    });
+    teachers.value = res.data.list;
+  } catch (e) {
+    ElMessage.error('获取教师列表失败');
+  }
+};
 </script>
 
 <style scoped>
