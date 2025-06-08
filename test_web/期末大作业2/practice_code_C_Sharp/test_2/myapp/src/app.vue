@@ -31,6 +31,9 @@
     <!-- 更新学生表单，默认隐藏 -->
     <el-dialog v-model="updateDialogVisible" title="更新学生成绩">
       <el-form :model="updateForm" label-width="120px">
+        <el-form-item label="姓名">
+          <el-input v-model="updateForm.name"></el-input>
+        </el-form-item>
         <el-form-item label="数学">
           <el-input v-model.number="updateForm.math"></el-input>
         </el-form-item>
@@ -95,6 +98,7 @@ const userForm = ref({
 // 更新学生表单数据
 const updateForm = ref({
   id: '',
+  name: '',
   math: '',
   chinese: '',
   english: ''
@@ -161,6 +165,7 @@ const submitAddUser = async () => {
 const handleUpdateUser = (student) => {
   updateForm.value = {
     id: student.id,
+    name: student.name,
     math: student.math,
     chinese: student.chinese,
     english: student.english
@@ -173,11 +178,9 @@ const handleUpdateUser = (student) => {
  */
 const submitUpdateUser = async () => {
   try {
-    // 调用 api.updateStudent 方法提交数据
-    await api.updateStudent(updateForm.value);
+    await api.updateStudent(updateForm.value); // 这样会带上 name
     ElMessage.success('学生成绩更新成功');
     updateDialogVisible.value = false;
-    // 重新获取学生列表
     await fetchStudentList();
   } catch (error) {
     ElMessage.error('学生成绩更新失败，请重试');
