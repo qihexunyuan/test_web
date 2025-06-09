@@ -56,6 +56,9 @@
     <!-- 新增教师表单，默认隐藏 -->
     <el-dialog v-model="teacherDialogVisible" title="新增教师">
       <el-form :model="teacherForm" label-width="120px">
+        <el-form-item label="教师ID">
+          <el-input v-model="teacherForm.id"></el-input>
+        </el-form-item>
         <el-form-item label="教师姓名">
           <el-input v-model="teacherForm.name"></el-input>
         </el-form-item>

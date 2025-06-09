@@ -57,20 +57,24 @@ exports.delete = (req, res) => {
 
 // 添加教师
 exports.add = (req, res) => {
-  const { name, subject, year } = req.body;
-  db.query('INSERT INTO teacher (name, subject, year) VALUES (?, ?, ?)', [name, subject, year], (err, result) => {
-    if (err) return res.send('错误：' + err.message);
+  const { id, name, subject, class: className, totalHours, classSize } = req.body;
+  db.query('INSERT INTO teacher (id, name, subject, class, totalHours, classSize) VALUES (?, ?, ?, ?, ?, ?)', [id, name, subject, className, totalHours, classSize], (err, result) => {
+    if (err) return res.send({ code: 500, message: '添加失败: ' + err.message });
     res.send({ code: 200, message: '添加成功' });
   });
 };
 
 // 更新教师
 exports.update = (req, res) => {
-  const { id, name, subject, year } = req.body;
-  db.query('UPDATE teacher SET name=?, subject=?, year=? WHERE id=?', [name, subject, year, id], (err, result) => {
-    if (err) return res.send('错误：' + err.message);
-    res.send({ code: 200, message: '更新成功' });
-  });
+  const { id, name, subject, class: className, totalHours, classSize } = req.body;
+  db.query(
+    'UPDATE teacher SET name=?, subject=?, class=?, totalHours=?, classSize=? WHERE id=?',
+    [name, subject, className, totalHours, classSize, id],
+    (err, result) => {
+      if (err) return res.send({ code: 500, message: '更新失败: ' + err.message });
+      res.send({ code: 200, message: '更新成功' });
+    }
+  );
 };
 
 // 删除学生
